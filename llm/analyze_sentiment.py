@@ -6,8 +6,6 @@ from datetime import datetime
 import pprint
 import env_utils
 
-base_url = 'https://api.siliconflow.cn/v1'
-api_key = 'sk-kledjhymnmmqdrfxpjorunnvdtgbgmhccwzvlifxhvpelyob'
 data_set = '/Users/monacui/about_src/study/llm/sentiment_analysis.json'
 
 
