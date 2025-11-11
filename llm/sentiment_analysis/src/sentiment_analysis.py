@@ -4,9 +4,11 @@ import json
 import time
 from datetime import datetime
 import pprint
-import env_utils
 
-data_set = '/Users/monacui/about_src/study/llm/sentiment_analysis.json'
+from env import env_utils
+
+
+data_set = '/Users/monacui/about_src/study/LLM/sentiment_analysis/data/sentiment_analysis.json'
 
 
 def read_from_json(path): 
@@ -15,7 +17,7 @@ def read_from_json(path):
     return dict
 
 
-def analyze_sentiment(base_url, api_key, prompt, max_tokens): 
+def analyze_sentiment(base_url, api_key, sys_prompt, user_prompt, max_tokens): 
     try: 
         client = OpenAI(    
             base_url=base_url,
@@ -24,8 +26,8 @@ def analyze_sentiment(base_url, api_key, prompt, max_tokens):
         response = client.chat.completions.create(
             model="Qwen/Qwen3-8B",
             messages=[
-                {"role": "system", "content": "你是一个专业的情感分析助手。"},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": sys_prompt},
+                {"role": "user", "content": user_prompt}
             ],
             max_tokens=max_tokens,  # 限制输出长度
             temperature=0  # 低随机性，保证结果稳定
@@ -104,7 +106,7 @@ def version_2(base_url, api_key):
         label = item['label']
 
         # prompt原则：角色 + 思维链（CoT）+ 输出格式限定
-        prompt = f"""
+        sys_prompt = f"""
             你是一名中文情感分析专家，请按照以下分析要求进行情感分析，仅用一个词“正向”、“负向”或者“中性”回答
             1. 如果是表扬、积极、满意、乐观的内容，回答“正向”
             2. 如果是批评、消极、不满、悲观的内容，回答“负向”
@@ -112,12 +114,14 @@ def version_2(base_url, api_key):
                 - 客观描述事实；
                 - 理性评价（即使有轻微褒贬，但整体平衡、克制、无情绪化语言）；
                 - 技术性、说明性、总结性语句。
-
-            文本：{text}
-            情感倾向：
         """
 
-        result = analyze_sentiment(base_url, api_key, prompt, 10)
+        user_prompt = f"""
+                文本：{text}
+                情感倾向：
+        """
+
+        result = analyze_sentiment(base_url, api_key, sys_prompt, user_prompt, 10)
         data_with_result.append({
             'id': id,
             'text': text,
