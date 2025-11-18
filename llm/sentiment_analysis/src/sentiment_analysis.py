@@ -4,8 +4,14 @@ import json
 import time
 from datetime import datetime
 import pprint
+import sys
 
-from env import env_utils
+from dotenv import load_dotenv
+
+load_dotenv()
+
+sys.path.append("/Users/monacui/about_src/study/llm/common_module")
+from llms import chat_openai
 
 
 data_set = '/Users/monacui/about_src/study/LLM/sentiment_analysis/data/sentiment_analysis.json'
@@ -17,26 +23,11 @@ def read_from_json(path):
     return dict
 
 
-def analyze_sentiment(base_url, api_key, sys_prompt, user_prompt, max_tokens): 
-    try: 
-        client = OpenAI(    
-            base_url=base_url,
-            api_key=api_key
-            )
-        response = client.chat.completions.create(
-            model="Qwen/Qwen3-8B",
-            messages=[
-                {"role": "system", "content": sys_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            max_tokens=max_tokens,  # 限制输出长度
-            temperature=0  # 低随机性，保证结果稳定
-        )
-        sentiment = response.choices[0].message.content.strip()
-        return sentiment
-    except Exception as e:
-        print(f"情感分析出错: {e}")
-        return None
+def analyze_sentiment(sys_prompt, user_prompt, max_tokens): 
+    llm = chat_openai.ChatOpenAI()
+    messages = llm.build_messages(sys_prompt=sys_prompt, user_prompt = user_prompt)    
+    result = llm.chat_completions(model_name = "qwen/qwen3-8b", messages = messages, max_tokens = max_tokens, temperature = 0)
+    
 
 ##----------------------- 版本1: 批量预测 & 准确率评估 -----------------------## 
 # 1. 分别把训练集和groundtruth组织成prompt送给模型做预测和准确率评估   ----------- #
@@ -80,7 +71,7 @@ def version_1(base_url, api_key):
     print(f"-------------------------------result----------------------------\n ${result}")
     print("耗时：%.2fs" % (end - start))
     
-def version_2(base_url, api_key):
+def version_2():
     def calculate_accuracy(data_with_result):
         right_num = 0
         wrong_num = 0
@@ -121,7 +112,7 @@ def version_2(base_url, api_key):
                 情感倾向：
         """
 
-        result = analyze_sentiment(base_url, api_key, sys_prompt, user_prompt, 10)
+        result = analyze_sentiment(sys_prompt, user_prompt, 10)
         data_with_result.append({
             'id': id,
             'text': text,
@@ -133,11 +124,8 @@ def version_2(base_url, api_key):
 
 if __name__ == "__main__":
     # version_1()
-    openai_env = env_utils.get_api_conf('open_ai')
-    base_url = openai_env['base_url']
-    api_key = openai_env['api_key']
           
-    version_2(base_url, api_key)
+    version_2()
    
     
     
